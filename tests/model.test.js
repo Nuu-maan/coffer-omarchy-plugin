@@ -96,11 +96,40 @@ test("a caption-less clip still says something", function () {
   assert.strictEqual(Model.previewText(image, 40), "Untitled clip")
 })
 
-test("preview text is collapsed to one line and truncated", function () {
+test("a multi-line item previews its first line, not a run-on of all of them", function () {
   var item = text("a", 1000)
-  item.text = "one\ntwo   three"
+  item.text = "bind = SUPER, S\nbind = SUPER SHIFT, S"
+  assert.strictEqual(Model.previewText(item), "bind = SUPER, S")
+})
+
+test("preview text collapses runs of whitespace and truncates", function () {
+  var item = text("a", 1000)
+  item.text = "one   two\tthree"
   assert.strictEqual(Model.previewText(item), "one two three")
   assert.strictEqual(Model.previewText(item, 8).length, 8)
+})
+
+test("a leading blank line does not preview as nothing", function () {
+  var item = text("a", 1000)
+  item.text = "\n\n  real content"
+  assert.strictEqual(Model.previewText(item), "real content")
+})
+
+test("the meta line says how much of a text item is not shown", function () {
+  var one = text("a", 1000)
+  one.text = "first\nsecond"
+  assert.strictEqual(Model.rowMeta(one), "+1 more line")
+
+  var many = text("b", 2000)
+  many.text = "first\nsecond\nthird\n\nfourth"
+  assert.strictEqual(Model.rowMeta(many), "+3 more lines")
+
+  assert.strictEqual(Model.rowMeta(text("c", 3000)), "")
+})
+
+test("the meta line for an image is still its size", function () {
+  var image = { id: "i", kind: "image", file: "i.png", caption: "c", width: 691, height: 494 }
+  assert.strictEqual(Model.rowMeta(image), "691 × 494")
 })
 
 test("an image path is resolved under the images directory", function () {
@@ -116,6 +145,19 @@ test("a file name that tries to escape the images directory is refused", functio
 
 test("a text item has no image path", function () {
   assert.strictEqual(Model.imagePathFor("/images", text("a", 1)), "")
+})
+
+test("flatten walks the groups in the order they are drawn", function () {
+  var items = [text("plain", 4000), text("r", 1000, { tag: "Research" }), text("t", 2000, { tag: "Todo" })]
+  var sections = [{ name: "Research", order: 1000 }, { name: "Todo", order: 2000 }]
+  var rows = Model.flatten(Model.groupItems(items, sections).groups)
+  assert.deepStrictEqual(rows.map(function (i) { return i.id }), ["r", "t", "plain"])
+})
+
+test("a row finds its own place in the flattened list", function () {
+  var rows = [text("a", 1000), text("b", 2000)]
+  assert.strictEqual(Model.indexOfId(rows, "b"), 1)
+  assert.strictEqual(Model.indexOfId(rows, "gone"), -1)
 })
 
 test("the badge is empty at zero and capped above ninety-nine", function () {

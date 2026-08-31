@@ -25,6 +25,10 @@ substitute because the hot-reload watcher does not follow one.
 Coffer itself is not required for the bar to work. Without it the panel says so
 and the capture buttons report that they could not find it.
 
+Copying needs `wl-copy` from `wl-clipboard`, which Omarchy already installs.
+Ticking an item off needs a Coffer that understands `--done`; on an older one
+the button opens the Coffer window instead.
+
 ## Settings
 
 Both live on the widget's entry in `shell.json` and are editable from Omarchy's
@@ -34,6 +38,23 @@ bar settings.
 | --- | --- | --- |
 | Hide the icon when the queue is empty | off | Leave the icon in place and dim it, or take it out of the bar entirely until something is stashed. |
 | Items shown in the panel | 20 | How many open items the panel lists before it stops and says how many more there are. The bar count is always the full number. |
+
+## Working the list down
+
+| Action | What it does |
+| --- | --- |
+| Click a row, or `enter` | Copies the item and closes the panel. Text goes over as text, a clip as `image/png`. |
+| The tick, or `d` | Marks the item done in Coffer. It leaves the list on the next save. |
+| `j` / `k`, arrows | Move the cursor. |
+| `s` / `c` | Stash a selection, clip a region. |
+
+Copying does not go through Coffer at all — the plugin pipes to `wl-copy`
+itself. It has to: on Wayland only the focused client may own the selection, so
+a Coffer sitting in the tray cannot take it, and asking it to would mean putting
+its window in front of you, which is the thing this plugin exists to avoid.
+
+Ticking off is the opposite case. It changes the store, so it has to go through
+the app — `coffer --done=<id>`, forwarded to the running instance.
 
 ## How it reads Coffer
 

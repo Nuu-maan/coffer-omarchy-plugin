@@ -59,8 +59,12 @@ case "$ACTION" in
   which) printf '%s\n' "$BIN" ;;
   stash) exec "$BIN" --stash ;;
   clip) exec "$BIN" --clip ;;
+  done)
+    [[ $# -ge 1 ]] || { printf 'done needs an item id\n' >&2; exit 2; }
+    exec "$BIN" "--done=$1"
+    ;;
   *)
-    printf 'usage: omarchy-coffer <which|stash|clip>\n' >&2
+    printf 'usage: omarchy-coffer <which|stash|clip|done ID>\n' >&2
     exit 2
     ;;
 esac

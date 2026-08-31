@@ -74,8 +74,9 @@ Item {
 
   property var pending: []
 
-  function run(action) {
+  function run(action, id) {
     var argv = [service.launcher, String(action)]
+    if (id !== undefined && id !== null && String(id) !== "") argv.push(String(id))
     if (actionProc.running) {
       var queue = service.pending.slice()
       queue.push(argv)
@@ -87,6 +88,21 @@ Item {
 
   function stash() { service.run("stash") }
   function clip() { service.run("clip") }
+  function markDone(id) { service.run("done", id) }
+
+  function copyItem(item) {
+    if (!item) return false
+    if (item.kind === "image") {
+      var path = service.imagePathFor(item)
+      if (!path) return false
+      Quickshell.execDetached(["bash", "-c", "wl-copy --type image/png < \"$1\"", "wl-copy", path])
+      return true
+    }
+    var text = String(item.text || "")
+    if (!text) return false
+    Quickshell.execDetached(["wl-copy", "--", text])
+    return true
+  }
 
   Process {
     id: actionProc

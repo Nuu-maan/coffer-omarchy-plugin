@@ -127,6 +127,24 @@ function groupItems(items, sections, limit) {
   return { groups: groups, shown: shown.length, total: open.length, hidden: open.length - shown.length }
 }
 
+function flatten(groups) {
+  var list = asList(groups)
+  var out = []
+  for (var g = 0; g < list.length; g++) {
+    var members = asList(list[g].items)
+    for (var i = 0; i < members.length; i++) out.push(members[i])
+  }
+  return out
+}
+
+function indexOfId(items, id) {
+  var list = asList(items)
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] && String(list[i].id) === String(id)) return i
+  }
+  return -1
+}
+
 function badgeText(count) {
   var n = Number(count)
   if (!isFinite(n) || n <= 0) return ""
@@ -146,12 +164,31 @@ function heroMeta(result) {
   return meta
 }
 
+function textLines(item) {
+  var lines = String(itemLabel(item)).split("\n")
+  var out = []
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].replace(/\s+/g, " ").trim()
+    if (line) out.push(line)
+  }
+  return out
+}
+
 function previewText(item, limit) {
-  var label = itemLabel(item).replace(/\s+/g, " ").trim()
+  var lines = textLines(item)
   var max = isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 0
-  if (!label) return item && item.kind === "image" ? "Untitled clip" : "Empty item"
-  if (max && label.length > max) return label.slice(0, max - 1) + "…"
-  return label
+  if (!lines.length) return item && item.kind === "image" ? "Untitled clip" : "Empty item"
+  var first = lines[0]
+  if (max && first.length > max) return first.slice(0, max - 1) + "…"
+  return first
+}
+
+function rowMeta(item) {
+  if (!item) return ""
+  if (item.kind === "image") return item.width + " × " + item.height
+  var extra = textLines(item).length - 1
+  if (extra <= 0) return ""
+  return "+" + extra + (extra === 1 ? " more line" : " more lines")
 }
 
 function imagePathFor(imagesDir, item) {
@@ -162,6 +199,6 @@ function imagePathFor(imagesDir, item) {
 
 if (typeof module !== "undefined") module.exports = {
   asList, itemLabel, byOrder, normalizeItem, normalizeSection,
-  parseStore, openItems, sameTag, groupItems,
-  badgeText, tooltipFor, heroMeta, previewText, imagePathFor
+  parseStore, openItems, sameTag, groupItems, flatten, indexOfId,
+  badgeText, tooltipFor, heroMeta, textLines, previewText, rowMeta, imagePathFor
 }
