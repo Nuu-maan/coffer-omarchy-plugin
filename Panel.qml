@@ -51,9 +51,10 @@ Panel {
   }
 
   function moveCursor(dy) {
-    root.cursorActive = true
     root.ensureCursor()
-    if (dy === 0 || root.rows.length === 0) return
+    if (root.rows.length === 0) return
+    root.cursorActive = true
+    if (dy === 0) return
     root.selectedIndex = Math.max(0, Math.min(root.rows.length - 1, root.selectedIndex + dy))
   }
 
@@ -64,13 +65,16 @@ Panel {
 
   function copyAndClose(item) {
     if (!root.svc || !item) return
+    root.cursorActive = true
     if (root.svc.copyItem(item)) root.close()
   }
 
   onOpenedChanged: {
-    root.cursorActive = false
     root.ensureCursor()
+    root.cursorActive = root.opened && root.rows.length > 0
   }
+
+  onRowsChanged: root.ensureCursor()
 
   readonly property bool iconVisible: !hideWhenEmpty || openCount > 0 || opened
 
@@ -118,18 +122,18 @@ Panel {
 
       onCloseRequested: root.close()
       onTabRequested: function (direction) { root.switchPanel(direction) }
-      onMoveRequested: function (dx, dy) {
-        if (!root.cursorActive) { root.cursorActive = true; return }
-        root.moveCursor(dy)
-      }
-      onActivateRequested: if (root.cursorActive) root.copyAndClose(root.selectedItem())
+      onMoveRequested: function (dx, dy) { root.moveCursor(dy) }
+      onActivateRequested: root.copyAndClose(root.selectedItem())
       onTextKey: function (t) {
         var key = String(t).toLowerCase()
         if (key === "s" && root.svc) return root.svc.stash()
         if (key === "c" && root.svc) return root.svc.clip()
         if (key === "d" && root.svc) {
           var item = root.selectedItem()
-          if (item) root.svc.markDone(item.id)
+          if (item) {
+            root.cursorActive = true
+            root.svc.markDone(item.id)
+          }
         }
       }
 
