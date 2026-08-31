@@ -118,6 +118,19 @@ test("a text item has no image path", function () {
   assert.strictEqual(Model.imagePathFor("/images", text("a", 1)), "")
 })
 
+test("flatten walks the groups in the order they are drawn", function () {
+  var items = [text("plain", 4000), text("r", 1000, { tag: "Research" }), text("t", 2000, { tag: "Todo" })]
+  var sections = [{ name: "Research", order: 1000 }, { name: "Todo", order: 2000 }]
+  var rows = Model.flatten(Model.groupItems(items, sections).groups)
+  assert.deepStrictEqual(rows.map(function (i) { return i.id }), ["r", "t", "plain"])
+})
+
+test("a row finds its own place in the flattened list", function () {
+  var rows = [text("a", 1000), text("b", 2000)]
+  assert.strictEqual(Model.indexOfId(rows, "b"), 1)
+  assert.strictEqual(Model.indexOfId(rows, "gone"), -1)
+})
+
 test("the badge is empty at zero and capped above ninety-nine", function () {
   assert.strictEqual(Model.badgeText(0), "")
   assert.strictEqual(Model.badgeText(7), "7")

@@ -26,6 +26,7 @@ Panel {
   readonly property string glyphStash: "\u{F021A}"
   readonly property string glyphClip: "\u{F0100}"
   readonly property string glyphImage: "\u{F02E9}"
+  readonly property string glyphDone: "\u{F05E1}"
 
   readonly property bool hideWhenEmpty: setting("hideWhenEmpty", false)
   readonly property int maxItems: setting("maxItems", 20)
@@ -36,6 +37,40 @@ Panel {
   readonly property string engineError: svc
     ? (svc.storeError || svc.lastError)
     : "The Coffer service is not loaded."
+
+  readonly property var rows: Model.flatten(result.groups)
+
+  property int selectedIndex: -1
+  property bool cursorActive: false
+
+  function ensureCursor() {
+    var n = root.rows.length
+    if (n === 0) { root.selectedIndex = -1; return }
+    if (root.selectedIndex >= n) root.selectedIndex = n - 1
+    if (root.selectedIndex < 0) root.selectedIndex = 0
+  }
+
+  function moveCursor(dy) {
+    root.cursorActive = true
+    root.ensureCursor()
+    if (dy === 0 || root.rows.length === 0) return
+    root.selectedIndex = Math.max(0, Math.min(root.rows.length - 1, root.selectedIndex + dy))
+  }
+
+  function selectedItem() {
+    if (root.selectedIndex < 0 || root.selectedIndex >= root.rows.length) return null
+    return root.rows[root.selectedIndex]
+  }
+
+  function copyAndClose(item) {
+    if (!root.svc || !item) return
+    if (root.svc.copyItem(item)) root.close()
+  }
+
+  onOpenedChanged: {
+    root.cursorActive = false
+    root.ensureCursor()
+  }
 
   readonly property bool iconVisible: !hideWhenEmpty || openCount > 0 || opened
 
@@ -83,10 +118,19 @@ Panel {
 
       onCloseRequested: root.close()
       onTabRequested: function (direction) { root.switchPanel(direction) }
+      onMoveRequested: function (dx, dy) {
+        if (!root.cursorActive) { root.cursorActive = true; return }
+        root.moveCursor(dy)
+      }
+      onActivateRequested: if (root.cursorActive) root.copyAndClose(root.selectedItem())
       onTextKey: function (t) {
         var key = String(t).toLowerCase()
-        if (key === "s" && root.svc) root.svc.stash()
-        else if (key === "c" && root.svc) root.svc.clip()
+        if (key === "s" && root.svc) return root.svc.stash()
+        if (key === "c" && root.svc) return root.svc.clip()
+        if (key === "d" && root.svc) {
+          var item = root.selectedItem()
+          if (item) root.svc.markDone(item.id)
+        }
       }
 
       Flickable {
@@ -184,6 +228,17 @@ Panel {
             horizontalAlignment: Text.AlignHCenter
           }
 
+          Text {
+            visible: root.rows.length > 0
+            width: parent.width
+            text: "enter copy · d tick off · s stash · c clip"
+            color: root.dim
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+          }
+
           PanelSeparator { foreground: root.foreground }
 
           Row {
@@ -219,18 +274,31 @@ Panel {
     }
   }
 
-  component QueueRow: Item {
+  component QueueRow: CursorSurface {
     id: row
     required property var item
 
     readonly property bool isImage: row.item && row.item.kind === "image"
     readonly property string thumbPath: root.svc ? root.svc.imagePathFor(row.item) : ""
+    readonly property int rowIndex: Model.indexOfId(root.rows, row.item.id)
 
-    implicitHeight: Math.max(textCol.implicitHeight, thumb.height) + Style.space(4)
+    hasCursor: root.cursorActive && root.selectedIndex === row.rowIndex
+    foreground: root.foreground
+    implicitHeight: Math.max(textCol.implicitHeight, thumb.height) + Style.space(8)
+
+    MouseArea {
+      anchors.fill: parent
+      hoverEnabled: true
+      acceptedButtons: Qt.LeftButton
+      cursorShape: Qt.PointingHandCursor
+      onEntered: { root.cursorActive = true; root.selectedIndex = row.rowIndex }
+      onClicked: root.copyAndClose(row.item)
+    }
 
     Rectangle {
       id: thumb
       anchors.left: parent.left
+      anchors.leftMargin: Style.spacing.rowPaddingX
       anchors.verticalCenter: parent.verticalCenter
       width: row.isImage ? Style.space(34) : 0
       height: row.isImage ? Style.space(34) : 0
@@ -259,11 +327,24 @@ Panel {
       }
     }
 
+    PanelActionButton {
+      id: doneButton
+      anchors.right: parent.right
+      anchors.rightMargin: Style.spacing.rowPaddingX
+      anchors.verticalCenter: parent.verticalCenter
+      iconText: root.glyphDone
+      tooltipText: "Tick it off  (d)"
+      foreground: root.foreground
+      fontFamily: root.fontFamily
+      onClicked: if (root.svc) root.svc.markDone(row.item.id)
+    }
+
     Column {
       id: textCol
       anchors.left: thumb.right
       anchors.leftMargin: row.isImage ? Style.space(8) : 0
-      anchors.right: parent.right
+      anchors.right: doneButton.left
+      anchors.rightMargin: Style.space(8)
       anchors.verticalCenter: parent.verticalCenter
       spacing: Style.spacing.hairline
 
