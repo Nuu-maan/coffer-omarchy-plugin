@@ -361,8 +361,8 @@ Panel {
 
       Text {
         width: parent.width
-        visible: row.isImage
-        text: row.item.width + " × " + row.item.height
+        visible: text !== ""
+        text: Model.rowMeta(row.item)
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption

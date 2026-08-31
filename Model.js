@@ -164,12 +164,31 @@ function heroMeta(result) {
   return meta
 }
 
+function textLines(item) {
+  var lines = String(itemLabel(item)).split("\n")
+  var out = []
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].replace(/\s+/g, " ").trim()
+    if (line) out.push(line)
+  }
+  return out
+}
+
 function previewText(item, limit) {
-  var label = itemLabel(item).replace(/\s+/g, " ").trim()
+  var lines = textLines(item)
   var max = isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 0
-  if (!label) return item && item.kind === "image" ? "Untitled clip" : "Empty item"
-  if (max && label.length > max) return label.slice(0, max - 1) + "…"
-  return label
+  if (!lines.length) return item && item.kind === "image" ? "Untitled clip" : "Empty item"
+  var first = lines[0]
+  if (max && first.length > max) return first.slice(0, max - 1) + "…"
+  return first
+}
+
+function rowMeta(item) {
+  if (!item) return ""
+  if (item.kind === "image") return item.width + " × " + item.height
+  var extra = textLines(item).length - 1
+  if (extra <= 0) return ""
+  return "+" + extra + (extra === 1 ? " more line" : " more lines")
 }
 
 function imagePathFor(imagesDir, item) {
@@ -181,5 +200,5 @@ function imagePathFor(imagesDir, item) {
 if (typeof module !== "undefined") module.exports = {
   asList, itemLabel, byOrder, normalizeItem, normalizeSection,
   parseStore, openItems, sameTag, groupItems, flatten, indexOfId,
-  badgeText, tooltipFor, heroMeta, previewText, imagePathFor
+  badgeText, tooltipFor, heroMeta, textLines, previewText, rowMeta, imagePathFor
 }

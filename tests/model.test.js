@@ -96,11 +96,40 @@ test("a caption-less clip still says something", function () {
   assert.strictEqual(Model.previewText(image, 40), "Untitled clip")
 })
 
-test("preview text is collapsed to one line and truncated", function () {
+test("a multi-line item previews its first line, not a run-on of all of them", function () {
   var item = text("a", 1000)
-  item.text = "one\ntwo   three"
+  item.text = "bind = SUPER, S\nbind = SUPER SHIFT, S"
+  assert.strictEqual(Model.previewText(item), "bind = SUPER, S")
+})
+
+test("preview text collapses runs of whitespace and truncates", function () {
+  var item = text("a", 1000)
+  item.text = "one   two\tthree"
   assert.strictEqual(Model.previewText(item), "one two three")
   assert.strictEqual(Model.previewText(item, 8).length, 8)
+})
+
+test("a leading blank line does not preview as nothing", function () {
+  var item = text("a", 1000)
+  item.text = "\n\n  real content"
+  assert.strictEqual(Model.previewText(item), "real content")
+})
+
+test("the meta line says how much of a text item is not shown", function () {
+  var one = text("a", 1000)
+  one.text = "first\nsecond"
+  assert.strictEqual(Model.rowMeta(one), "+1 more line")
+
+  var many = text("b", 2000)
+  many.text = "first\nsecond\nthird\n\nfourth"
+  assert.strictEqual(Model.rowMeta(many), "+3 more lines")
+
+  assert.strictEqual(Model.rowMeta(text("c", 3000)), "")
+})
+
+test("the meta line for an image is still its size", function () {
+  var image = { id: "i", kind: "image", file: "i.png", caption: "c", width: 691, height: 494 }
+  assert.strictEqual(Model.rowMeta(image), "691 × 494")
 })
 
 test("an image path is resolved under the images directory", function () {
