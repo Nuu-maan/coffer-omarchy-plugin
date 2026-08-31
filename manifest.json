@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.nuu-maan.coffer",
+  "name": "Coffer",
+  "version": "0.1.0",
+  "author": "nuu-maan",
+  "license": "MIT",
+  "description": "Coffer's capture queue in the Omarchy bar. See what is still open, stash a selection or clip a region without leaving what you are doing.",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Coffer",
+    "description": "Open items in the Coffer capture queue",
+    "category": "Utility",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "hideWhenEmpty": false,
+      "maxItems": 20
+    },
+    "schema": [
+      {
+        "key": "hideWhenEmpty",
+        "type": "boolean",
+        "label": "Hide the icon when the queue is empty",
+        "description": "Keep the bar icon out of the way until something is stashed. Left off, the icon stays put and dims instead.",
+        "defaultValue": false
+      },
+      {
+        "key": "maxItems",
+        "type": "integer",
+        "label": "Items shown in the panel",
+        "description": "How many open items the panel lists before it stops and says how many more there are. The bar count is always the full number.",
+        "min": 5,
+        "max": 100,
+        "step": 5,
+        "defaultValue": 20
+      }
+    ]
+  }
+}
