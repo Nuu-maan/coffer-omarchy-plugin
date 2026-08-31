@@ -55,13 +55,17 @@ fi
 ACTION=${1:-which}
 shift || true
 
+spawn() {
+  setsid "$BIN" "$@" >/dev/null 2>&1 </dev/null &
+}
+
 case "$ACTION" in
   which) printf '%s\n' "$BIN" ;;
-  stash) exec "$BIN" --stash ;;
-  clip) exec "$BIN" --clip ;;
+  stash) spawn --stash ;;
+  clip) spawn --clip ;;
   done)
     [[ $# -ge 1 ]] || { printf 'done needs an item id\n' >&2; exit 2; }
-    exec "$BIN" "--done=$1"
+    spawn "--done=$1"
     ;;
   *)
     printf 'usage: omarchy-coffer <which|stash|clip|done ID>\n' >&2
