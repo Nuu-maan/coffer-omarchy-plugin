@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+desktop_exec() {
+  local dirs dir file line
+  IFS=: read -ra dirs <<<"${XDG_DATA_HOME:-$HOME/.local/share}:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+  for dir in "${dirs[@]}"; do
+    for file in "$dir/applications/coffer.desktop" "$dir/applications/com.coffer.app.desktop"; do
+      [[ -r "$file" ]] || continue
+      line=$(sed -n 's/^Exec=//p' "$file" | head -n1) || true
+      [[ -n "$line" ]] || continue
+      line=${line%% %*}
+      line=${line#\"}
+      line=${line%\"}
+      [[ -x "$line" ]] && { printf '%s\n' "$line"; return 0; }
+    done
+  done
+  return 1
+}
+
+resolve() {
+  if [[ -n "${COFFER_BIN:-}" && -x "${COFFER_BIN}" ]]; then
+    printf '%s\n' "$COFFER_BIN"
+    return 0
+  fi
+  local found
+  if found=$(command -v coffer 2>/dev/null); then
+    printf '%s\n' "$found"
+    return 0
+  fi
+  if found=$(desktop_exec); then
+    printf '%s\n' "$found"
+    return 0
+  fi
+  for found in \
+    "$HOME/Applications/Coffer/coffer" \
+    "$HOME/Applications/Coffer/AppRun" \
+    "$HOME/Applications/Coffer.AppImage" \
+    "$HOME/.local/bin/coffer" \
+    /opt/Coffer/coffer \
+    /opt/coffer/coffer \
+    /usr/local/bin/coffer \
+    /usr/bin/coffer
+  do
+    [[ -x "$found" ]] && { printf '%s\n' "$found"; return 0; }
+  done
+  return 1
+}
+
+if ! BIN=$(resolve); then
+  printf 'Coffer was not found. Install it, or set COFFER_BIN to its executable.\n' >&2
+  exit 3
+fi
+
+ACTION=${1:-which}
+shift || true
+
+case "$ACTION" in
+  which) printf '%s\n' "$BIN" ;;
+  stash) exec "$BIN" --stash ;;
+  clip) exec "$BIN" --clip ;;
+  *)
+    printf 'usage: omarchy-coffer <which|stash|clip>\n' >&2
+    exit 2
+    ;;
+esac
