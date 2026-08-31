@@ -127,6 +127,24 @@ function groupItems(items, sections, limit) {
   return { groups: groups, shown: shown.length, total: open.length, hidden: open.length - shown.length }
 }
 
+function flatten(groups) {
+  var list = asList(groups)
+  var out = []
+  for (var g = 0; g < list.length; g++) {
+    var members = asList(list[g].items)
+    for (var i = 0; i < members.length; i++) out.push(members[i])
+  }
+  return out
+}
+
+function indexOfId(items, id) {
+  var list = asList(items)
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] && String(list[i].id) === String(id)) return i
+  }
+  return -1
+}
+
 function badgeText(count) {
   var n = Number(count)
   if (!isFinite(n) || n <= 0) return ""
@@ -162,6 +180,6 @@ function imagePathFor(imagesDir, item) {
 
 if (typeof module !== "undefined") module.exports = {
   asList, itemLabel, byOrder, normalizeItem, normalizeSection,
-  parseStore, openItems, sameTag, groupItems,
+  parseStore, openItems, sameTag, groupItems, flatten, indexOfId,
   badgeText, tooltipFor, heroMeta, previewText, imagePathFor
 }
