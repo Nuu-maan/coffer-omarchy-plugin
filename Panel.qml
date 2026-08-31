@@ -22,9 +22,9 @@ Panel {
   readonly property color dim: Qt.darker(foreground, 1.55)
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
 
-  readonly property string glyphQueue: "\u{F0BA7}"
-  readonly property string glyphStash: "\u{F0523}"
-  readonly property string glyphClip: "\u{F0198}"
+  readonly property string glyphQueue: "\u{F0726}"
+  readonly property string glyphStash: "\u{F021A}"
+  readonly property string glyphClip: "\u{F0100}"
   readonly property string glyphImage: "\u{F02E9}"
 
   readonly property bool hideWhenEmpty: setting("hideWhenEmpty", false)
