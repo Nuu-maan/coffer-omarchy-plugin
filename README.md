@@ -39,6 +39,19 @@ bar settings.
 | Hide the icon when the queue is empty | off | Leave the icon in place and dim it, or take it out of the bar entirely until something is stashed. |
 | Items shown in the panel | 20 | How many open items the panel lists before it stops and says how many more there are. The bar count is always the full number. |
 
+## Opening it with a key
+
+The bar icon is one way in. A key is the other, and it works whether or not the
+bar is on screen — the panel anchors to where the icon would be:
+
+```lua
+o.bind("SUPER + Q", "Coffer: open the queue", "omarchy-shell shell toggle io.github.nuu-maan.coffer")
+```
+
+Put that in `~/.config/hypr/bindings.lua`. `SUPER + Q` is free on a stock
+Omarchy; check yours with `omarchy menu keybindings --print` before taking it,
+and `hl.unbind` first if it is not.
+
 ## Working the list down
 
 | Action | What it does |
@@ -95,6 +108,7 @@ An AppImage install puts nothing on `$PATH`, which is why step 3 exists. Set
 ./dev-install.sh                  # install and hot-reload
 node tests/manifest.test.js       # manifest rules the shell actually enforces
 node tests/model.test.js          # store parsing, grouping, limits
+./tests/launcher.test.sh          # executable resolution, exit codes, no blocking
 ```
 
 `Model.js` is plain functions of their arguments — no QML types, no file
